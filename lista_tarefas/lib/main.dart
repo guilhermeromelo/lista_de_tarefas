@@ -15,12 +15,32 @@ class Home extends StatefulWidget {
   _HomeState createState() => _HomeState();
 }
 
-final taskController = TextEditingController();
-
-void _taskChanged(String text) {}
+final _taskController = TextEditingController();
 
 class _HomeState extends State<Home> {
   List _toDoList = [];
+
+
+  @override
+  void initState() {
+    super.initState();
+    _readData().then((data){
+      setState(() {
+        _toDoList = json.decode(data);
+      });
+    });
+  }
+
+  void _addToDo() {
+    setState(() {
+      Map<String, dynamic> newToDo = Map();
+      newToDo["title"] = _taskController.text;
+      _taskController.text = "";
+      newToDo["ok"] = false;
+      _toDoList.add(newToDo);
+      _saveData();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,33 +55,58 @@ class _HomeState extends State<Home> {
         ),
         body: Padding(
             padding: EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-            child: Column(children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 72,
-                    child: buildTextField(
-                        "Nova Tarefa", "", taskController, _taskChanged),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Container(),
-                  ),
-                  Expanded(
-                    flex: 25,
-                    child: RaisedButton(
-                      color: Colors.blueAccent,
-                      textColor: Colors.white,
-                      child: Text(
-                        "ADD",
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      onPressed: () {},
+            child: Column(
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 72,
+                      child: buildTextField("Nova Tarefa", "", _taskController),
                     ),
-                  )
-                ],
-              )
-            ])));
+                    Expanded(
+                      flex: 3,
+                      child: Container(),
+                    ),
+                    Expanded(
+                      flex: 25,
+                      child: RaisedButton(
+                        color: Colors.blueAccent,
+                        textColor: Colors.white,
+                        child: Text(
+                          "ADD",
+                          style: TextStyle(fontSize: 20),
+                        ),
+                        onPressed: _addToDo,
+                      ),
+                    )
+                  ],
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: EdgeInsets.only(top: 10.0),
+                    itemCount: _toDoList.length,
+                    itemBuilder: (context, index) {
+                      return CheckboxListTile(
+                        title: Text(
+                          _toDoList[index]["title"],
+                        ),
+                        value: _toDoList[index]["ok"],
+                        secondary: CircleAvatar(
+                          child: Icon(_toDoList[index]["ok"] == true
+                              ? Icons.check
+                              : Icons.error,),
+                        ), onChanged: (c){
+                          setState(() {
+                            _toDoList[index]["ok"] = c;
+                            _saveData();
+                          });
+                      },
+                      );
+                    },
+                  ),
+                )
+              ],
+            )));
   }
 
   Future<File> _getFile() async {
@@ -84,17 +129,15 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Widget buildTextField(String label, String prefix,
-      TextEditingController controller, Function function) {
+  Widget buildTextField(
+      String label, String prefix, TextEditingController controller) {
     return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: Colors.blueAccent),
-          border: OutlineInputBorder(),
-          prefixText: prefix),
-      style: TextStyle(color: Colors.black, fontSize: 25),
-      onChanged: function,
-    );
+        controller: controller,
+        decoration: InputDecoration(
+            labelText: label,
+            labelStyle: TextStyle(color: Colors.blueAccent),
+            border: OutlineInputBorder(),
+            prefixText: prefix),
+        style: TextStyle(color: Colors.black, fontSize: 20));
   }
 }
