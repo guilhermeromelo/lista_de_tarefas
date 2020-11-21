@@ -166,6 +166,7 @@ class _HomeState extends State<Home> {
                 onPressed: () {
                   setState(() {
                     _toDoList.insert(_lastRemovedPos, _lastRemoved);
+                    _saveData();
                   });
                 },
               ),
